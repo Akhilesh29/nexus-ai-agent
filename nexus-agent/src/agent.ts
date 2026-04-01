@@ -163,11 +163,25 @@ export async function runAgent(
     emit({ type: "final", content: answer });
     return { answer, steps };
   } catch (err) {
+    const errorText = String(err);
+    const isMissingKey = errorText.includes("GEMINI_API_KEY is not set");
+    const isQuotaOrRateLimit =
+      errorText.includes("Gemini API error (429)") ||
+      errorText.includes("RESOURCE_EXHAUSTED") ||
+      errorText.toLowerCase().includes("quota exceeded");
+
+    let userMessage = "Unable to generate AI response right now. Please try again.";
+    if (isMissingKey) {
+      userMessage = "AI key is not configured on the server. Please set GEMINI_API_KEY.";
+    } else if (isQuotaOrRateLimit) {
+      userMessage = "Unable to generate AI response right now. Please try again.";
+    }
+
     const fallback =
       parsed && toolContext
-        ? `Tool execution completed:\n\n${toolContext}\n\nSet GEMINI_API_KEY to enable full open-ended AI responses.`
-        : "Set GEMINI_API_KEY to enable full open-ended AI responses. Without it, only basic deterministic tool tasks are available.";
-    emit({ type: "final", content: `${fallback}\n\nDetails: ${String(err)}` });
+        ? `Tool execution completed:\n\n${toolContext}`
+        : userMessage;
+    emit({ type: "final", content: fallback });
     return { answer: fallback, steps };
   }
 }

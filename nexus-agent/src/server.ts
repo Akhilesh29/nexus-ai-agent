@@ -8,7 +8,6 @@ const PORT = process.env.PORT ?? 3000;
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? "*";
 
 app.use(express.json());
-app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.use((req, res, next) => {

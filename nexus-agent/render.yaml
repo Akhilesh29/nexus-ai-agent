@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: nexus-agent-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: FRONTEND_ORIGIN
+        value: https://your-frontend.vercel.app

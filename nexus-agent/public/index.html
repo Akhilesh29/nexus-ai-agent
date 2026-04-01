@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — AI Automation Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0f1115;
+      --surface:   #191c22;
+      --surface-2: #15181e;
+      --border:    #2b3039;
+      --border2:   #343b46;
+      --green:     #10b981;
+      --green-dim: #0ea46f;
+      --green-glow:rgba(16,185,129,0.15);
+      --cyan:      #60a5fa;
+      --yellow:    #f59e0b;
+      --magenta:   #ec4899;
+      --red:       #ef4444;
+      --text:      #e5e7eb;
+      --muted:     #9ca3af;
+      --card:      #20242d;
+      --shadow:    rgba(0,0,0,0.45);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at 50% -20%, #202733 0%, var(--bg) 55%);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .app-shell {
+      width: min(1400px, 100%);
+      height: min(900px, calc(100vh - 36px));
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 24px 80px var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+      backdrop-filter: none;
+      z-index: 10;
+    }
+
+    .traffic {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-right: 8px;
+    }
+    .traffic span {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .traffic .red { background: #ff5f57; }
+    .traffic .yellow { background: #ffbd2e; }
+    .traffic .green { background: #28c840; }
+
+    .top-meta {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+    }
+
+    .logo-ring {
+      position: relative;
+      width: 36px; height: 36px;
+    }
+    .logo-ring::before, .logo-ring::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 50%;
+    }
+    .logo-ring::before {
+      border: 2px solid var(--green);
+      animation: ringPulse 2.5s ease-in-out infinite;
+    }
+    .logo-ring::after {
+      border: 1px solid var(--green-dim);
+      inset: 5px;
+      animation: ringPulse 2.5s ease-in-out infinite 0.4s;
+    }
+    .logo-dot-inner {
+      position: absolute;
+      inset: 13px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--green);
+    }
+    @keyframes ringPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.3; transform: scale(1.1); }
+    }
+
+    .logo-text {
+      display: flex; flex-direction: column; gap: 1px;
+    }
+    .logo-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      color: var(--green);
+      text-shadow: none;
+    }
+    .logo-sub {
+      font-size: 0.58rem;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--green);
+      border: 1px solid var(--green-dim);
+      padding: 4px 14px;
+      border-radius: 100px;
+      background: rgba(16,185,129,0.08);
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 1.8s ease-in-out infinite;
+    }
+
+    /* ── Artifact Banner ── */
+    .artifact-banner {
+      background: linear-gradient(90deg, rgba(16,185,129,0.14), rgba(96,165,250,0.08));
+      border: 1px solid var(--green-dim);
+      color: var(--green);
+      padding: 10px 32px;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      position: relative;
+    }
+    .artifact-banner::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+    }
+
+    /* ── Layout ── */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      overflow: hidden;
+    }
+
+    /* ── Chat ── */
+    #chat-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      scrollbar-width: thin;
+      scrollbar-color: #3b4450 transparent;
+    }
+
+    .msg { display: flex; gap: 12px; animation: fadeUp 0.25s ease; }
+    .msg.user { flex-direction: row-reverse; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .avatar {
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700;
+      flex-shrink: 0; letter-spacing: 0.04em;
+    }
+    .avatar.user-av  {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(14,165,233,0.3);
+    }
+    .avatar.agent-av {
+      background: linear-gradient(135deg, #00ffe0, #00b89f);
+      color: #000;
+      box-shadow: 0 0 12px rgba(0,255,224,0.3);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.55rem;
+      font-weight: 900;
+    }
+
+    .bubble {
+      max-width: 74%;
+      padding: 13px 18px;
+      border-radius: 14px;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg.user .bubble {
+      background: #1e3a8a;
+      border: 1px solid #2f4ea1;
+      color: #dbeafe;
+      border-radius: 14px 4px 14px 14px;
+    }
+    .msg.agent .bubble {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 4px 14px 14px 14px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    }
+
+    /* ── Examples ── */
+    .examples-wrap {
+      padding: 0 28px 18px;
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .chip {
+      font-size: 0.68rem;
+      padding: 5px 13px;
+      border-radius: 100px;
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.18s;
+      background: var(--card);
+      letter-spacing: 0.02em;
+    }
+    .chip:hover { border-color: var(--green-dim); color: var(--green); background: rgba(16,185,129,0.08); }
+
+    /* ── Input bar ── */
+    #input-bar {
+      display: flex; gap: 10px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    #task-input {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--text);
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+      resize: none;
+      height: 46px;
+      line-height: 1.5;
+    }
+    #task-input:focus {
+      border-color: var(--green-dim);
+      box-shadow: 0 0 0 3px rgba(0,255,224,0.07);
+    }
+    #task-input::placeholder { color: var(--muted); }
+
+    #run-btn {
+      background: var(--green);
+      border: none;
+      border-radius: 12px;
+      padding: 0 22px;
+      color: #082018;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: all 0.15s;
+      box-shadow: 0 0 16px rgba(16,185,129,0.25);
+    }
+    #run-btn:hover:not(:disabled) {
+      box-shadow: 0 0 24px rgba(16,185,129,0.45);
+      transform: translateY(-1px);
+    }
+    #run-btn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+
+    /* ── Steps sidebar ── */
+    #steps-panel {
+      display: flex; flex-direction: column;
+      background: #171a20;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .panel-title {
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .step-counter {
+      margin-left: auto;
+      font-size: 0.6rem;
+      color: var(--green);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+    }
+
+    #steps-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex; flex-direction: column; gap: 7px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+    }
+
+    .step-card {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 10px 14px;
+      border-left: 3px solid transparent;
+      animation: fadeUp 0.2s ease;
+      font-size: 0.73rem;
+      line-height: 1.55;
+    }
+    .step-card.thinking    { border-color: var(--cyan); }
+    .step-card.tool_call   { border-color: var(--yellow); }
+    .step-card.tool_result { border-color: var(--magenta); }
+    .step-card.final       { border-color: var(--green); background: rgba(16,185,129,0.03); }
+    .step-card.error       { border-color: var(--red); }
+
+    .step-label {
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .step-card.thinking    .step-label { color: var(--cyan); }
+    .step-card.tool_call   .step-label { color: var(--yellow); }
+    .step-card.tool_result .step-label { color: var(--magenta); }
+    .step-card.final       .step-label { color: var(--green); }
+    .step-card.error       .step-label { color: var(--red); }
+
+    .step-content {
+      color: #d1d5db;
+      white-space: pre-wrap;
+      word-break: break-all;
+      opacity: 0.75;
+      font-size: 0.71rem;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 11px; height: 11px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      vertical-align: middle;
+      margin-right: 7px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Empty states ── */
+    .empty {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; color: var(--muted);
+      font-size: 0.72rem; text-align: center; padding: 40px;
+    }
+    .empty-glyph { font-size: 1.6rem; margin-bottom: 6px; opacity: 0.5; }
+
+    /* ── Scanline overlay ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 100% 3px;
+      opacity: 0.06;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    @media (max-width: 980px) {
+      .app-shell { height: calc(100vh - 24px); border-radius: 12px; }
+      main { grid-template-columns: 1fr; }
+      #steps-panel { display: none; }
+      .artifact-banner::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+<header>
+  <div class="traffic">
+    <span class="red"></span>
+    <span class="yellow"></span>
+    <span class="green"></span>
+  </div>
+  <div class="logo-ring"><div class="logo-dot-inner"></div></div>
+  <div class="logo-text">
+    <span class="logo-name">NEXUS</span>
+    <span class="logo-sub">Neural Execution &amp; Unified Automation System</span>
+  </div>
+  <div class="top-meta">
+    <span>Gemini 2.5 Flash · Render API</span>
+    <div class="status-pill"><span class="status-dot"></span>Hosted Agent</div>
+  </div>
+</header>
+
+<div class="artifact-banner">
+  
+</div>
+
+<main>
+  <section id="chat-panel">
+    <div id="messages">
+      <div class="empty" id="empty-state">
+        <div class="empty-glyph">N</div>
+        <div style="color:var(--green);font-weight:600;letter-spacing:0.06em">NEXUS READY</div>
+        <div style="margin-top:4px">Enter a task below to begin automation.</div>
+        <div style="opacity:0.5;margin-top:2px;font-size:0.65rem">calculator · text · lists · formatter · datetime</div>
+      </div>
+    </div>
+
+    <div class="examples-wrap" id="examples">
+      <span class="chip" onclick="useExample(this)">What day is it today?</span>
+      <span class="chip" onclick="useExample(this)">Calculate (150 * 12) + (75 / 3)</span>
+      <span class="chip" onclick="useExample(this)">Word count: "the quick brown fox jumps over the lazy dog"</span>
+      <span class="chip" onclick="useExample(this)">Create list "tasks", add: design, code, test, code — deduplicate &amp; sort</span>
+      <span class="chip" onclick="useExample(this)">Format [{name:'Alice',score:92},{name:'Bob',score:85}] as markdown table</span>
+    </div>
+
+    <div id="input-bar">
+      <textarea id="task-input" placeholder="Describe your task…"></textarea>
+      <button id="run-btn" onclick="runTask()">EXECUTE</button>
+    </div>
+  </section>
+
+  <aside id="steps-panel">
+    <div class="panel-header">
+      <div class="panel-title">Agent Trace</div>
+      <div class="step-counter" id="step-counter"></div>
+    </div>
+    <div id="steps-list">
+      <div class="empty">
+        <div class="empty-glyph" style="font-size:1rem">Log</div>
+        <div>Execution trace appears here in real-time.</div>
+      </div>
+    </div>
+  </aside>
+</main>
+</div>
+
+<script>
+  const taskInput   = document.getElementById('task-input');
+  const runBtn      = document.getElementById('run-btn');
+  const messages    = document.getElementById('messages');
+  const stepsList   = document.getElementById('steps-list');
+  const stepCounter = document.getElementById('step-counter');
+  let stepCount = 0;
+  const params = new URLSearchParams(window.location.search);
+  const apiFromQuery = params.get('api');
+  if (apiFromQuery) localStorage.setItem('NEXUS_API_BASE', apiFromQuery.replace(/\/$/, ''));
+  const API_BASE = localStorage.getItem('NEXUS_API_BASE') || '';
+
+  taskInput.addEventListener('input', () => {
+    taskInput.style.height = '46px';
+    taskInput.style.height = Math.min(taskInput.scrollHeight, 120) + 'px';
+  });
+  taskInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runTask(); }
+  });
+
+  function useExample(el) {
+    taskInput.value = el.textContent;
+    taskInput.focus();
+  }
+
+  function esc(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function trunc(str, n) {
+    return str.length > n ? str.slice(0, n) + '…' : str;
+  }
+  function safeFinalText(str) {
+    return trunc(String(str || ''), 5000);
+  }
+
+  function appendMessage(role, text) {
+    document.getElementById('empty-state')?.remove();
+    document.getElementById('examples')?.remove();
+    const isUser = role === 'user';
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    div.innerHTML = `
+      <div class="avatar ${isUser ? 'user-av' : 'agent-av'}">${isUser ? 'YOU' : 'NXS'}</div>
+      <div class="bubble">${esc(text)}</div>
+    `;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return div.querySelector('.bubble');
+  }
+
+  function addStep(step) {
+    stepsList.querySelector('.empty')?.remove();
+    stepCount++;
+    stepCounter.textContent = `${stepCount} steps`;
+
+    const icons = { thinking:'', tool_call:'', tool_result:'', final:'', error:'' };
+    const labels = {
+      thinking:    'Reasoning',
+      tool_call:   `Tool → ${step.toolName ?? ''}`,
+      tool_result: `Result ← ${step.toolName ?? ''}`,
+      final:       'Final Answer',
+      error:       'Error',
+    };
+    const card = document.createElement('div');
+    card.className = `step-card ${step.type}`;
+    card.innerHTML = `
+      <div class="step-label">${icons[step.type] ?? ''} ${labels[step.type] ?? step.type}</div>
+      <div class="step-content">${esc(trunc(step.content || '', 320))}</div>
+    `;
+    stepsList.appendChild(card);
+    stepsList.scrollTop = stepsList.scrollHeight;
+  }
+
+  async function runTask() {
+    const task = taskInput.value.trim();
+    if (!task) return;
+
+    taskInput.value = '';
+    taskInput.style.height = '46px';
+    runBtn.disabled = true;
+    taskInput.disabled = true;
+
+    stepsList.innerHTML = '';
+    stepCount = 0;
+    stepCounter.textContent = '';
+
+    appendMessage('user', task);
+    const agentBubble = appendMessage('agent', '');
+    agentBubble.innerHTML = '<span class="spinner"></span>NEXUS processing…';
+
+    let finalAnswer = '';
+    let requestTimedOut = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      requestTimedOut = true;
+      controller.abort();
+    }, 45000);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok || !res.body) throw new Error(`Request failed (${res.status})`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      let doneReceived = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const step = JSON.parse(line.slice(6));
+          if (step.type === 'done') {
+            doneReceived = true;
+            break;
+          }
+          if (step.type === 'final') finalAnswer = step.content;
+          addStep(step);
+        }
+        if (doneReceived) {
+          await reader.cancel();
+          break;
+        }
+      }
+    } catch (err) {
+      addStep({ type: 'error', content: String(err) });
+      finalAnswer = requestTimedOut
+        ? 'Request timed out. Backend took too long to respond. Please try again.'
+        : 'Something went wrong. Check console logs.';
+    } finally {
+      clearTimeout(timeoutId);
+      runBtn.disabled = false;
+      taskInput.disabled = false;
+      taskInput.focus();
+    }
+
+    agentBubble.textContent = safeFinalText(finalAnswer || '(No response)');
+  }
+</script>
+</body>
+</html>
